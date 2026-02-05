@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanSort AI - Waste Segregation Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .video-section {
+            position: relative;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+
+        #videoFeed {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .live-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: #ff0000;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .prediction-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            border-left: 4px solid #4ade80;
+        }
+
+        .prediction-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            border-radius: 20px;
+            font-size: 1.4em;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);
+            animation: slideIn 0.5s ease;
+        }
+
+        .confidence-bar-container {
+            margin: 15px 0;
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+            border-radius: 15px;
+            transition: width 0.5s ease, background 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+
+        .confidence-fill.medium {
+            background: linear-gradient(90deg, #fb923c 0%, #f97316 100%);
+        }
+
+        .confidence-fill.low {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .bin-recommendation {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 1.1em;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        .stats-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+
+        .stat-card.total { border-color: #8b5cf6; }
+        .stat-card.plastic { border-color: #3b82f6; }
+        .stat-card.paper { border-color: #eab308; }
+        .stat-card.metal { border-color: #64748b; }
+        .stat-card.glass { border-color: #06b6d4; }
+        .stat-card.organic { border-color: #22c55e; }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .stat-icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+        }
+
+        .info-text {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 968px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌱 CleanSort AI</h1>
+            <p class="subtitle">Intelligent Waste Segregation System | Hybrid AI + Sensor Technology</p>
+        </header>
+
+        <div class="dashboard">
+            <!-- Video Feed Section -->
+            <div class="card video-section">
+                <div class="video-container">
+                    <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Webcam Feed">
+                    <div class="live-indicator">
+                        <div class="live-dot"></div>
+                        <span>LIVE</span>
+                    </div>
+                </div>
+
+                <div class="prediction-panel">
+                    <div class="prediction-title">
+                        🎯 Current Detection
+                    </div>
+                    
+                    <div class="category-badge" id="categoryBadge">
+                        SCANNING...
+                    </div>
+
+                    <div class="confidence-bar-container">
+                        <div class="confidence-label">
+                            <span>Confidence Level</span>
+                            <span id="confidenceText">0%</span>
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill" style="width: 0%;">
+                                0%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bin-recommendation" id="binRecommendation">
+                        → Waiting for item...
+                    </div>
+
+                    <div class="method-badge" id="methodBadge">
+                        Method: N/A
+                    </div>
+
+                    <div class="info-text" id="reasoning">
+                        Position waste item in front of camera for classification
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="stats-section">
+                <div class="card">
+                    <h2 style="margin-bottom: 20px; font-size: 1.5em;">📊 Classification Statistics</h2>
+                    
+                    <div class="stat-card total">
+                        <div class="stat-label">
+                            <span class="stat-icon">📦</span> Total Items Classified
+                        </div>
+                        <div class="stat-value" id="statTotal">0</div>
+                    </div>
+
+                    <div class="stat-card plastic">
+                        <div class="stat-label">
+                            <span class="stat-icon">♻️</span> Plastic
+                        </div>
+                        <div class="stat-value" id="statPlastic">0</div>
+                    </div>
+
+                    <div class="stat-card paper">
+                        <div class="stat-label">
+                            <span class="stat-icon">📄</span> Paper
+                        </div>
+                        <div class="stat-value" id="statPaper">0</div>
+                    </div>
+
+                    <div class="stat-card metal">
+                        <div class="stat-label">
+                            <span class="stat-icon">🔩</span> Metal
+                        </div>
+                        <div class="stat-value" id="statMetal">0</div>
+                    </div>
+
+                    <div class="stat-card glass">
+                        <div class="stat-label">
+                            <span class="stat-icon">🍾</span> Glass
+                        </div>
+                        <div class="stat-value" id="statGlass">0</div>
+                    </div>
+
+                    <div class="stat-card organic">
+                        <div class="stat-label">
+                            <span class="stat-icon">🌿</span> Organic
+                        </div>
+                        <div class="stat-value" id="statOrganic">0</div>
+                    </div>
+
+                    <button class="reset-btn" onclick="resetStats()">
+                        🔄 Reset Statistics
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>CleanSort AI © 2026 | Hybrid Waste Segregation System</p>
+            <p style="font-size: 0.85em; margin-top: 5px;">
+                Combining Computer Vision AI with Sensor Technology for Accurate Waste Classification
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Update predictions every 500ms
+        setInterval(updatePrediction, 500);
+        
+        // Update statistics every 2 seconds
+        setInterval(updateStats, 2000);
+
+        function updatePrediction() {
+            fetch('/prediction')
+                .then(response => response.json())
+                .then(data => {
+                    // Update category badge
+                    const categoryBadge = document.getElementById('categoryBadge');
+                    const category = data.category.toUpperCase();
+                    categoryBadge.textContent = category === 'UNKNOWN' ? 'SCANNING...' : category;
+                    
+                    // Update category color
+                    categoryBadge.style.background = getCategoryColor(data.category);
+                    
+                    // Update confidence
+                    const confidence = Math.round(data.confidence);
+                    document.getElementById('confidenceText').textContent = confidence + '%';
+                    
+                    const confidenceFill = document.getElementById('confidenceFill');
+                    confidenceFill.style.width = confidence + '%';
+                    confidenceFill.textContent = confidence + '%';
+                    
+                    // Update confidence bar color
+                    confidenceFill.className = 'confidence-fill';
+                    if (confidence < 50) {
+                        confidenceFill.classList.add('low');
+                    } else if (confidence < 75) {
+                        confidenceFill.classList.add('medium');
+                    }
+                    
+                    // Update bin recommendation
+                    document.getElementById('binRecommendation').textContent = '→ ' + data.bin;
+                    
+                    // Update method badge
+                    document.getElementById('methodBadge').textContent = 'Method: ' + data.method;
+                    
+                    // Update reasoning
+                    document.getElementById('reasoning').textContent = data.reasoning;
+                })
+                .catch(error => console.error('Error fetching prediction:', error));
+        }
+
+        function updateStats() {
+            fetch('/stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('statTotal').textContent = data.total;
+                    document.getElementById('statPlastic').textContent = data.plastic;
+                    document.getElementById('statPaper').textContent = data.paper;
+                    document.getElementById('statMetal').textContent = data.metal;
+                    document.getElementById('statGlass').textContent = data.glass;
+                    document.getElementById('statOrganic').textContent = data.organic;
+                })
+                .catch(error => console.error('Error fetching stats:', error));
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                'plastic': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                'paper': 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
+                'metal': 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                'glass': 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+                'organic': 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                'unknown': 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
+            };
+            return colors[category] || colors['unknown'];
+        }
+
+        function resetStats() {
+            if (confirm('Are you sure you want to reset all statistics?')) {
+                fetch('/reset_stats')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            updateStats();
+                            alert('Statistics reset successfully!');
+                        }
+                    })
+                    .catch(error => console.error('Error resetting stats:', error));
+            }
+        }
+
+        // Initial load
+        updatePrediction();
+        updateStats();
+    </script>
+</body>
+</html>
